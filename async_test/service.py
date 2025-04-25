@@ -1,19 +1,11 @@
-from django.shortcuts import render
+from celery import shared_task
 import requests
-from django.http import JsonResponse
-from django.views.decorators.csrf import csrf_exempt
-from celery import Celery
 
-# Initialize Celery
-app = Celery(
-    main='async_test', 
-    broker='pyamqp://guest@localhost//',
-)
-
-@app.task
+@shared_task
 def get_pokemon(pokemon_name):
     if not pokemon_name:
-        return JsonResponse({"error": "No Pokemon name provided"}, status=400)
-    response = requests.get(f"https://pokeapi.co/api/v2/pokemon/{pokemon_name}")
+        return {'error': 'No Pokemon name provided'}
+    response = requests.get(f'https://pokeapi.co/api/v2/pokemon/{pokemon_name}')
     if response.status_code == 200:
         return response.json()
+    return {'error': 'Pokemon not found'}
